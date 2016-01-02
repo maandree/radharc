@@ -61,9 +61,11 @@ int main(void)
 		if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb))
 			return perror(""), 1;
 	}
+	if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb)) /* sugar */
+		return perror(""), 1;
 	if (fstat(1, &attr))
 		return perror(""), 1;
-	if ((size_t)(attr.st_size) != EXPECTED_ELEMENTS * 5 * sizeof(double))
+	if ((size_t)(attr.st_size) != (EXPECTED_ELEMENTS + 1) * 5 * sizeof(double))
 		return 1;
 
 	return 0;
