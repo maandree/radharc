@@ -91,6 +91,7 @@ struct settings {
 
 	/**
 	 * Pathname to the hook script.
+	 * Do not free this.
 	 */
 	char *hookpath;
 
@@ -122,6 +123,7 @@ struct settings {
 
 	/**
 	 * Values for -d, -e, and -m, in order.
+	 * Do not free its elements.
 	 */
 	char **monitors_id;
 
@@ -143,4 +145,23 @@ struct settings {
  * @param  settings  Output parameter for the settings.
  */
 void parse_command_line(int argc, char *argv[], struct settings *settings);
+
+
+/**
+ * Marshal settings into a buffer.
+ * 
+ * @param   param     The buffer, `NULL` if you want to know the required size.
+ * @param   settings  The settings to marshal.
+ * @return            The size of the output.
+ */
+size_t marshal_settings(char *buffer, const struct settings *settings);
+
+/**
+ * Unmarshal settings from a buffer.
+ * 
+ * @param   buffer    The buffer.
+ * @param   settings  Output parameter for the settings, will be allocated.
+ * @return            The number of unmarshalled bytes, 0 on error.
+ */
+size_t unmarshal_settings(char *buffer, struct settings **settings);
 

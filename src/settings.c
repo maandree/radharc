@@ -244,3 +244,79 @@ fail:
 	exit(1);
 }
 
+
+/**
+ * Marshal settings into a buffer.
+ * 
+ * @param   buffer    The buffer, `NULL` if you want to know the required size.
+ * @param   settings  The settings to marshal.
+ * @return            The size of the output.
+ */
+size_t
+marshal_settings(char *buffer, const struct settings *settings)
+{
+#define MARSHAL(N, DATUMP)  (n += aux = (N), (buf ? (memcpy(buf, DATUMP, aux), buf += aux, 0) : 0))
+
+	size_t n = 0, i = 0;
+	size_t aux;
+	char *buf = buffer;
+
+	if (buffer)  i = marshal_settings(NULL, settings);
+	MARSHAL(sizeof(i), &i);
+
+	MARSHAL(sizeof(*settings), settings);
+	if (settings->hookpath)
+		MARSHAL(strlen(settings->hookpath) + 1, settings->hookpath);
+	if (settings->monitors_arg)
+		MARSHAL(settings->monitors_n, settings->monitors_arg);
+	for (i = 0; i < settings->monitors_n; i++)
+		MARSHAL(strlen(settings->monitors_id[i]) + 1, settings->monitors_id[i]);
+
+	return n;
+}
+
+
+/**
+ * Unmarshal settings from a buffer.
+ * 
+ * @param   buffer    The buffer.
+ * @param   settings  Output parameter for the settings, will be allocated.
+ * @return            The number of unmarshalled bytes, 0 on error.
+ */
+size_t
+unmarshal_settings(char *buffer, struct settings **settings)
+{
+#define UNMARSHAL(N, DATUMP)  (aux = (N), memcpy((DATUMP), buf, aux), buf += aux)
+
+	size_t n, aux, i;
+	struct settings *s = NULL;
+	struct settings s_;
+	char *buf = buffer;
+	int saved_errno;
+
+	UNMARSHAL(sizeof(n), &n);
+	if (!(s = *settings = malloc(n - sizeof(n))))  return 0;
+	s->monitors_id = NULL, s->monitors_arg = NULL;
+
+	UNMARSHAL(sizeof(s_), &s_);
+	if (s_.monitors_n) {
+		if (!(*s = s_, s->monitors_id = malloc(s_.monitors_n * sizeof(char*))))  goto fail;
+		if (!(*s = s_, s->monitors_arg = malloc(s_.monitors_n * sizeof(char))))  goto fail;
+	}
+
+	s->hookpath = buf;
+	buf = strchr(buf, '\0') + 1;
+
+	UNMARSHAL(s_.monitors_n, s->monitors_arg);
+	for (i = 0; i < s_.monitors_n; i++)
+		UNMARSHAL(strlen(buf + 1), s->monitors_id[i]);
+
+	return n;
+
+fail:
+	saved_errno = errno;
+	free(s->monitors_id), free(s->monitors_arg), free(s), *settings = NULL;
+	errno = saved_errno;
+	return 0;
+}
+
