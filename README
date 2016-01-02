@@ -100,6 +100,15 @@ NOTES
 	I suggest using a local script named radharc that
 	sets all options for you.
 
+KNOWN ISSUES
+	In X.org, the gamma ramps do not apply to hardware cursors,
+	because the developers thinks it is the graphics drivers
+	that shall fix this, and they are not accepting patches for
+	this. You can use xorg-server-hwcursor-gamma, however, that
+	patched version does not apply apply the gamma ramps until
+	the cursor changes image. You can also use sortware cursors
+	if this really bothers you.
+
 SEE ALSO
 	redshift(1), blueshift(1), redshift-adjust(1), nightshift(1)
 
