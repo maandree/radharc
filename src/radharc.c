@@ -19,11 +19,17 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include "settings.h"
+
 
 
 int
 main(int argc, char *argv[])
 {
+	struct settings settings;
+
+	parse_command_line(argc, argv, &settings);
+
 	return 0;
 }
 

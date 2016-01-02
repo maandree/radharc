@@ -114,7 +114,7 @@ interpolate(double x1, double y1, double x2, double y2, double temp, double *r, 
  * @throws  EDOM  The selected temperature is below 1000 K.
  */
 int
-get_colour(int fd, int temp, double *r, double *g, double *b)
+get_colour(int fd, long int temp, double *r, double *g, double *b)
 {
 	double values[10]; /* low:x,y,r,g,b + high:x,y,r,g,b */
 	off_t offset;

@@ -35,5 +35,5 @@
  * @throws  0     The file did not have the expected size.
  * @throws  EDOM  The selected temperature is below 1000 K.
  */
-int get_colour(int fd, int temp, double *r, double *g, double *b);
+int get_colour(int fd, long int temp, double *r, double *g, double *b);
 

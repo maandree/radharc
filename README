@@ -7,7 +7,7 @@ PRONUNCIATION
 SYNOPSIS
 	radharc [OPTIONS]...
 
-	The -l option is mandatory.
+	The -l option is mandatory, unless single value -t is used.
 
 OPTIONS
 	-l LATITUDE:LONGITUDE
@@ -19,45 +19,55 @@ OPTIONS
 
 		Reminder for Americans (particularly US Americans),
 		you are an the western hemisphere, not the eastern,
-		thus your latitude is negative. If you experience
+		thus your longtiude is negative. If you experience
 		weird colour temperatures, 100 % of the times it is
 		because you forgot the minus sign. But no need to
 		feel stupid, it is a really common mistake.
 
+		No complicated stuff please, only latitudes within
+		±90° and longitudes within ±180°. No unit thought.
+
 	-t DAY:NIGHT
 		Select colour temperature to use during full daytime
 		and full night. This should be a integer. Do not
-		include the unit (the 'K').
+		include the unit (the 'K'). The temperatures must
+		be at least 1000 K.
 
 	-t TEMPERATURE
 		Select temperature to use. The program will exit
 		when it is done setting the temperature. The
 		natural colour temperature is 6500 K ('-t 6500').
+		The temperature must be at least 1000 K.
 
 	-t +DELTA
-		Increase the colour temperature by DELTA Kelvin.
+		Increase the colour temperature by DELTA kelvin.
 
 	-t -DELTA
-		Decrease the colour temperature by DELTA Kelvin.
+		Decrease the colour temperature by DELTA kelvin.
 
 	-T TEMPERATURE
 		Temperature that shall be used when the program
 		is disabled (via SIGUSR1).
 
-	-p	Print the current colour temperature.
+	-p	Print the current status.
 
 	-n	Set the temperature immediately, do not transition.
 
-	-N	Do not transision when exiting, reset and exit
-		immediately on exit.
+	-N	Do not transition when exiting, disabling, or
+		reenabling.
 
-	-o	Set the colour immediately, and exit.
+	-o	Set the colour, and exit.
 
 	-x	Ignore the current calibrations on the monitors.
 
 	-s SECONDS
 		The start and exit transitions shall take SECONDS
-		seconds. This may be a floating point number.
+		seconds. This may be a floating point number, with
+		an explicit unit.
+
+	-S KELVINS
+		The transitions speed, in kelvin per second.
+		This most be a positive integer.
 
 	-i
 		Apply negative image filter. Radharc will detect
@@ -68,6 +78,16 @@ OPTIONS
 
 	-b
 		Broadcast events with bus.
+
+	-d SERVER=DISPLAY
+		Use the display server whose identifier is
+		DISPLAY and whose identifier is stored in the
+		environment variable SERVER, for example
+		-d DISPLAY=:0 for the X display :0.
+
+	-d SYSTEM
+		Use a subsystem which does not have identifiers.
+		For example drm for the Direct Rendering Manager.
 
 	-e EDID
 		Select monitor to use by its EDID.
@@ -95,6 +115,13 @@ SIGNALS
 		Toggle negative image on monitor N, if monitors
 		have been selected manually, it will be in the
 		order they where selected.
+
+ENVIRONMENT
+	RADHARC_STATE
+		The pathname to the state file, will be
+		determined automatically if not set.
+		If not set, you may only have one instance
+		running per display server instance.
 
 NOTES
 	I suggest using a local script named radharc that
