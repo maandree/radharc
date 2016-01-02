@@ -22,6 +22,7 @@
 #include "blackbody.h"
 #include <unistd.h>
 #include <math.h>
+#include <errno.h>
 
 
 
@@ -90,7 +91,7 @@ ciexyy_to_srgb(double x, double y, double Y, double *r, double *g, double *b)
  * @param  b     Output parameter for the blue value.
  */
 static void
-interpolate(double x1, double y1, double x2, double y2, double temp, double *r, double *g, double *g)
+interpolate(double x1, double y1, double x2, double y2, double temp, double *r, double *g, double *b)
 {
 	double weight = fmod(temp, (double)DELTA) / (double)DELTA;
 	double x = x1 * (1 - weight) + x2 * weight;
