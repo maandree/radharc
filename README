@@ -87,7 +87,10 @@ OPTIONS
 
 	-d SYSTEM
 		Use a subsystem which does not have identifiers.
-		For example drm for the Direct Rendering Manager.
+		For example 'drm' for the Direct Rendering Manager.
+		You can also select 'none', this is useful if you
+		don't want any adjustments, but want events to be
+		broadcasted.
 
 	-e EDID
 		Select monitor to use by its EDID.
