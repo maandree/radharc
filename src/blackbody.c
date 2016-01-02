@@ -125,13 +125,13 @@ get_colour(int fd, int temp, double *r, double *g, double *b)
 	 * unencodeable. */
 	if (temp > HIGHEST)  temp = HIGHEST;
 	/* Things do not glow below 1000 K. Yes, fire is hot! */
-	if (temp < LOWEST)   return EDOM, -1;
+	if (temp < LOWEST)   return errno = EDOM, -1;
 
 	/* Read table. */
 	offset = ((off_t)temp - LOWEST) / DELTA;
 	offset *= (off_t)(5 * sizeof(double));
 	errno = 0;
-	if (pread(fd, values, sizeof(values), offset) < sizeof(values))
+	if (pread(fd, values, sizeof(values), offset) < (ssize_t)sizeof(values))
 		return -1;
 
 	/* Get colour. */
