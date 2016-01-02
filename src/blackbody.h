@@ -21,6 +21,7 @@
  */
 
 
+
 /**
  * Get the [0, 1] sRGB values of a colour temperature.
  * 
