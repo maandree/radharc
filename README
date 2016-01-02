@@ -4,6 +4,102 @@ NAME
 PRONUNCIATION
 	ɹˈaɪɐrk (depending on dialect)
 
+SYNOPSIS
+	radharc [OPTIONS]...
+
+	The -l option is mandatory.
+
+OPTIONS
+	-l LATITUDE:LONGITUDE
+		Tell radharc where you are. This is mandatory.
+		The values are measured in degrees and in the
+		GPS (you probably do not have too care about that,
+		the differences between the systems should not
+		be significant another), and must be in decimal.
+
+		Reminder for Americans (particularly US Americans),
+		you are an the western hemisphere, not the eastern,
+		thus your latitude is negative. If you experience
+		weird colour temperatures, 100 % of the times it is
+		because you forgot the minus sign. But no need to
+		feel stupid, it is a really common mistake.
+
+	-t DAY:NIGHT
+		Select colour temperature to use during full daytime
+		and full night. This should be a integer. Do not
+		include the unit (the 'K').
+
+	-t TEMPERATURE
+		Select temperature to use. The program will exit
+		when it is done setting the temperature. The
+		natural colour temperature is 6500 K ('-t 6500').
+
+	-t +DELTA
+		Increase the colour temperature by DELTA Kelvin.
+
+	-t -DELTA
+		Decrease the colour temperature by DELTA Kelvin.
+
+	-T TEMPERATURE
+		Temperature that shall be used when the program
+		is disabled (via SIGUSR1).
+
+	-p	Print the current colour temperature.
+
+	-n	Set the temperature immediately, do not transition.
+
+	-N	Do not transision when exiting, reset and exit
+		immediately on exit.
+
+	-o	Set the colour immediately, and exit.
+
+	-x	Ignore the current calibrations on the monitors.
+
+	-s SECONDS
+		The start and exit transitions shall take SECONDS
+		seconds. This may be a floating point number.
+
+	-i
+		Apply negative image filter. Radharc will detect
+		which monitors have this one when it starts.
+
+	-h PATHNAME
+		Use a hook script for events.
+
+	-b
+		Broadcast events with bus.
+
+	-e EDID
+		Select monitor to use by its EDID.
+
+	-m NUM
+		Select monitor to use by its global index.
+
+	-m SCREEN:NUM
+		Select monitor to use by its index without
+		a screen or graphic card. The later is for when
+		not inside a graphics environment.
+
+SIGNALS
+	SIGHUP
+		Perform an online update to a newer version.
+
+	SIGUSR1
+		Enable or disable radharc.
+
+	SIGUSR2
+		Toggle negative image filter. Enable on all
+		monitors if it is enable on some but not all.
+
+	SIGRTMIN+N
+		Toggle negative image on monitor N, if monitors
+		have been selected manually, it will be in the
+		order they where selected.
+
+NOTES
+	I suggest using a local script named radharc that
+	sets all options for you.
+
 SEE ALSO
 	redshift(1), blueshift(1), redshift-adjust(1), nightshift(1)
 
