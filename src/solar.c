@@ -314,6 +314,6 @@ double
 solar_elevation(double latitude, double longitude)
 {
 	double tm = julian_centuries();
-	return errno ? -1 : degrees(solar_elevation_from_time(rm, latitude, longitude));
+	return errno ? -1 : degrees(solar_elevation_from_time(tm, latitude, longitude));
 }
 
