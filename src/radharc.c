@@ -20,6 +20,30 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "settings.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+
+
+/**
+ * Exit if time the is before year 0 in J2000.
+ */
+#if defined(TIMETRAVELLER)
+static void
+check_timetravel(const char *argv0)
+{
+	struct timespec now;
+	if (clock_gettime(CLOCK_REALTIME, &now))
+		perror(argv0 ? argv0 : "radharc"), exit(1);
+	if (now.tv_nsec < (time_t)946728000L)
+		fprintf(stderr, "We have detected that you are a time-traveller"
+		                "(or your clock is not configured correctly.)"
+		                "Please recompile with -DTIMETRAVELLER"
+	                        "(or correct your clock.)"), exit(1);
+}
+#else
+# define check_timetravel(_)  /* do nothing */
+#endif
 
 
 
@@ -28,6 +52,7 @@ main(int argc, char *argv[])
 {
 	struct settings settings;
 
+	check_timetravel(*argv);
 	parse_command_line(argc, argv, &settings);
 
 	return 0;

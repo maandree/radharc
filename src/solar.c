@@ -116,24 +116,11 @@ elevation_from_hour_angle(double latitude, double declination, double hour_angle
 static inline double
 sun_geometric_mean_longitude(double tm)
 {
-	double rc = pow(0.0003032 * tm, 2.0) + 36000.76983 * tm + 280.46646;
-	return radians(fmod(rc, 360.0));
-	/*
-	  CANNIBALISERS:
-	    The result of this function should always be positive, this
-	    means that after division modulo 360 but before `radians`,
-	    you will need to add 360 if the value is negative. This can
-	    only happen if `tm` is negative, which can only happen for date
-	    times before 2000-(01)Jan-01 12:00:00 UTC par division modulo
-	    implementations with the signess of at least the left operand.
-	    More precively, it happens between circa 1970-(01)Jan-11
-	    16:09:02 UTC and circa 374702470660351740 seconds before
-	    January 1, 1970 00:00 UTC, which is so far back in time
-	    it cannot be reliable pinned down to the right year, but it
-	    is without a shadow of a doubt looooong before the Earth
-	    was formed, is right up there with the age of the Milky Way
-	    and the universe itself.
-	 */
+	double rc = fmod(pow(0.0003032 * tm, 2.0) + 36000.76983 * tm + 280.46646, 360.0);
+#if defined(TIMETRAVELLER)
+	rc = rc < 0.0 ? (rc + 360.0) : rc;
+#endif
+	return radians(rc);
 }
 
 /**
