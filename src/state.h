@@ -53,7 +53,7 @@ enum darkness {
 	ASTRONOMICAL_TWILIGHT = 3,
 
 	/**
-	 * The sky is reallu dark blue.
+	 * The sky is really dark blue.
 	 */
 	NIGHT = 4
 };
