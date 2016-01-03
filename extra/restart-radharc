@@ -34,11 +34,12 @@ done
 # Restart all instances of radharc.
 for pid in pgrep -x radharc; do
     # Open environ and cmdline and be sure that they we successfully opened.
-    exec 3<proc/"$pid"/environ
+    # It is possible that the process has exited, or is not yours.
+    exec 3<proc/"$pid"/environ 2>/dev/null
     if [ ! $? = 0 ]; then
 	continue
     fi
-    exec 4<proc/"$pid"/cmdline
+    exec 4<proc/"$pid"/cmdline 2>/dev/null
     if [ ! $? = 0 ]; then
 	continue
     fi
