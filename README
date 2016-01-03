@@ -139,6 +139,10 @@ KNOWN ISSUES
 	the cursor changes image. You can also use sortware cursors
 	if this really bothers you.
 
+	Wayland does not support this because it [Wayland] sucks.
+
+	Haiku does not support this yet.
+
 SEE ALSO
 	redshift(1), blueshift(1), redshift-adjust(1), nightshift(1)
 
