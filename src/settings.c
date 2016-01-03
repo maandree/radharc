@@ -32,13 +32,6 @@
 
 
 /**
- * The name of the process.
- */
-char *argv0 = NULL;
-
-
-
-/**
  * Print usage information and exit if a condition is met.
  * 
  * @param  condition  Do no do anything iff this is zero.
@@ -179,14 +172,17 @@ parse_command_line(int argc, char *argv[], struct settings *settings)
 	settings->night_temp   = 3500;
 	settings->trans_speed  = 50;
 
+#define PLUS(...)  (plus ? (__VA_ARGS__) : 0)
 	ARGBEGIN {
 	case 'l':
+		PLUS(location_set = 0);
 		usage(!(p = strchr(arg = ARGF(), ':')));
 		*p++ = '\0', location_set = 1;
 		usage(parse_location(arg, &(settings->latitude),  90.0));
 		usage(parse_location(arg, &(settings->longitude), 180.0));
 		break;
 	case 't':
+		PLUS(settings->day_temp = 5500, settings->night_temp = 3500);
 		settings->temp = settings->day_temp = settings->night_temp = 0;
 		settings->temp_direction = 0;
 		if ((p = strchr(arg = ARGF(), ':'))) {
@@ -198,36 +194,40 @@ parse_command_line(int argc, char *argv[], struct settings *settings)
 		}
 		break;
 	case 'T':
+		PLUS(settings->natural_temp = 6500);
 		usage(parse_temperature(ARGF(), &(settings->natural_temp), NULL, 1000));
 		break;
 	case 's':
+		PLUS(settings->trans_speed = 50);
 		settings->trans_speed = 0;
 		usage(parse_timespec(ARGF(), &(settings->transition)));
 		break;
 	case 'S':
+		PLUS(settings->trans_speed = 0);
 		usage(parse_temperature(ARGF(), &(settings->trans_speed), NULL, 1));
 		break;
 	case 'h':
-		usage(!(settings->hookpath = ARGF()));
+		settings->hookpath = (plus ? NULL : ARGF());
 		break;
 	case 'd': c++; /* Fall though. */
 	case 'e': c++; /* Fall though. */
 	case 'm': c++;
 #define REALLOC(VAR, N)  !(VAR = realloc(VAR, (N) * sizeof(*VAR)))
+		PLUS(settings->monitors_n = 0, free(settings->monitors_id), free(settings->monitors_arg));
 		settings->monitors_n++;
 		if (REALLOC(settings->monitors_id,  settings->monitors_n))  goto fail;
 		if (REALLOC(settings->monitors_arg, settings->monitors_n))  goto fail;
 		settings->monitors_id[settings->monitors_n - 1] = ARGF();
 		settings->monitors_arg[settings->monitors_n - 1] = (c == 3 ? 'm' : c == 2 ? 'e' : 'd'), c = 0;
 		break;
-	case 'p':  settings->print_status = 1;  break;
-	case 'n':  settings->panic_start  = 1;  break;
-	case 'N':  settings->panic_else   = 1;  break;
-	case 'o':  settings->set_and_exit = 1;  break;
-	case 'x':  settings->ignore_calib = 1;  break;
-	case 'i':  settings->negative     = 1;  break;
-	case 'b':  settings->use_bus      = 1;  break;
-	default:   usage(1);                    break;
+	case 'p':  settings->print_status = !plus;  break;
+	case 'n':  settings->panic_start  = !plus;  break;
+	case 'N':  settings->panic_else   = !plus;  break;
+	case 'o':  settings->set_and_exit = !plus;  break;
+	case 'x':  settings->ignore_calib = !plus;  break;
+	case 'i':  settings->negative     = !plus;  break;
+	case 'b':  settings->use_bus      = !plus;  break;
+	default:   usage(1);                        break;
 	} ARGEND;
 	usage(argc);
 

@@ -26,6 +26,13 @@
 
 
 /**
+ * The name of the process.
+ */
+char *argv0 = NULL;
+
+
+
+/**
  * Exit if time the is before year 0 in J2000.
  */
 #if defined(TIMETRAVELLER)

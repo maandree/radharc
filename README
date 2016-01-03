@@ -103,6 +103,13 @@ OPTIONS
 		a screen or graphic card. The later is for when
 		not inside a graphics environment.
 
+	All options also have a '+' variant, for example '+n'.
+	These undo the affect of previous '-' variant.
+	'+d', '+e', and '+m' all undo the affect of all previous
+	'-d', '-e', and '-m' options (not respectively).
+	Additionally, with the exception of '-d', '-e', '-m',
+	subsequent options override the previous of the the option.
+
 SIGNALS
 	SIGHUP
 		Perform an online update to a newer version.
