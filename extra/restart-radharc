@@ -31,10 +31,13 @@ for fd in $(ls -1 /dev/fd/); do
     fi
 done
 
+# Get the user's real UID, in a sh-portable way.
+uid="$(cat /proc/self/status | grep '^Uid:' | cut -f 2)"
+
 # Restart all instances of radharc.
-for pid in pgrep -x radharc; do
+for pid in pgrep -x -U $uid radharc; do
     # Open environ and cmdline and be sure that they we successfully opened.
-    # It is possible that the process has exited, or is not yours.
+    # It is possible that the process has exited.
     exec 3<proc/"$pid"/environ 2>/dev/null
     if [ ! $? = 0 ]; then
 	continue
