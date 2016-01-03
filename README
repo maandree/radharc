@@ -126,9 +126,30 @@ ENVIRONMENT
 		If not set, you may only have one instance
 		running per display server instance.
 
+RATIONALE
+	Your location is determined use GeoClue because it clunky,
+	unreliable, inaccurate and requires an Internet connection
+	or GPS device, it is way to common that neither is available.
+	And I do not want to handle all bug reports for this. Besides,
+	you can use an external program.
+
+	Your timezone is used to determine your location approximately
+	when not specified, You can be a really poor approximation.
+	It is too much work supporting summer time, especially when
+	summer time is not necessarily +1 hour, additionally you can
+	have scheme where it is first normal time, then summer time,
+	then double summer time, then back to summer time, and the back
+	normal time; complicated stuff, additionally, the Russian
+	Federation is in permanent summer time. And have you heard about
+	the People's Republic of China (not to be confused with the
+	less known Republic of China,) they have one timezone, which is
+	far from in the middle of the country. You can use an external
+	program. To keep it simple, we are not even using your timezone
+	to santity check your specified location.
+
 NOTES
-	I suggest using a local script named radharc that
-	sets all options for you.
+	I suggest using a local script named radharc that sets all
+	options for you.
 
 KNOWN ISSUES
 	In X.org, the gamma ramps do not apply to hardware cursors,
@@ -144,5 +165,6 @@ KNOWN ISSUES
 	Haiku does not support this yet.
 
 SEE ALSO
-	redshift(1), blueshift(1), redshift-adjust(1), nightshift(1)
+	redshift(1), blueshift(1), redshift-adjust(1), nightshift(1),
+	locateme(1)
 
