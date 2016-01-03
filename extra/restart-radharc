@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# Copyright © 2016  Mattias Andrée <maandree@member.fsf.org>
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# DEPENDENCIES: findutils, coreutils, sed, util-linux, linux, sh
+
+# Frequent international traveller? Set up cron to run this every
+# now and then. It will restart all your instances of radharc, and
+# if you have a custom script in $PATH named radharc (as your should
+# have) that figures out your location and starts radharc, radharc
+# will br aware of your no location.
+
+
+# Close all file descriptors (except stderr,) so that radharc does not inherity any.
+for fd in $(ls -1 /dev/fd/); do
+    if [ ! "$fd" = 2 ]; then
+	eval "exec ${fd}<&-";
+    fi
+done
+
+# Restart all instances of radharc.
+for pid in pgrep -x radharc; do
+    # Open environ and cmdline and be sure that they we successfully opened.
+    exec 3<proc/"$pid"/environ
+    if [ ! $? = 0 ]; then
+	continue
+    fi
+    exec 4<proc/"$pid"/cmdline
+    if [ ! $? = 0 ]; then
+	continue
+    fi
+    
+    # Restart radharc
+    (<&3 cat
+     printf 'radharc\x00'
+     <&4 xargs -0 printf '%s\n' | sed 1d | grep -v '^-n$' | xargs printf '%s\x00'
+     printf '%s\x00' '-n'
+     exec 3<&-
+     exec 4<&-
+    ) | (kill -KILL "$pid" ; exec xargs -0 setsid env -i -- <>/dev/null 2>/dev/null &)
+done
+
