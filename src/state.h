@@ -70,5 +70,5 @@ enum darkness get_darkness(double elevation);
  * @param   settings  The settings.
  * @return            0 on success, -1 on error.
  */
-int get_state_pathname(struct settings *settings);
+int get_state_pathname(const struct settings *settings);
 

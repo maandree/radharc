@@ -23,7 +23,7 @@
 
 #include <libgamma.h>
 
-#define t(...)  do { if (!(__VA_ARGS__)) goto fail; } while (0)
+#define try(...)  do { if (!(__VA_ARGS__)) goto fail; } while (0)
 
 
 
@@ -111,14 +111,14 @@ escape_display(const char* str)
  * @return            The string, `NULL` on error.
  */
 static char *
-get_display_string(struct settings *settings)
+get_display_string(const struct settings *settings)
 {
 	const char *var, *val;
 	char *r, *d = NULL, *rc = NULL, **displays;
 	size_t i, n = 0, len = 0;
 	int method, saved_errno;
 
-	t (displays = malloc(settings->monitors_n * sizeof(char *)));
+	try (displays = malloc(settings->monitors_n * sizeof(char *)));
 	for (i = 0; i < settings->monitors_n; i++)
 		if ((settings->monitors_arg[i] == 'd') && strchr(settings->monitors_id[i], '='))
 			len += 1 + strlen(displays[n++] = settings->monitors_id[i]);
@@ -134,16 +134,16 @@ get_display_string(struct settings *settings)
 	var = libgamma_method_default_site_variable(method);
 	val = libgamma_method_default_site(method);
 	if (!val)  return strdup("");
-	t (d = malloc((3 + strlen(var) + strlen(val)) * sizeof(char)));
+	try (d = malloc((3 + strlen(var) + strlen(val)) * sizeof(char)));
 	stpcpy(stpcpy(stpcpy(stpcpy(d, "."), var), "="), val);
-	t (rc = escape_display(d));
+	try (rc = escape_display(d));
 	return rc;
 
 custom:
 	qsort(displays, n, sizeof(*displays), displayenvcmp);
-	t (r = rc = malloc((2 * len + 1) * sizeof(char)));
+	try (r = rc = malloc((2 * len + 1) * sizeof(char)));
 	for (i = 0; i < n; i++) {
-		t (d = escape_display(displays[i]));
+		try (d = escape_display(displays[i]));
 		r = stpcpy(stpcpy(r, "."), d), free(d), d = NULL;
 	}
 	return rc;
@@ -161,15 +161,15 @@ fail:
  * @return            0 on success, -1 on error.
  */
 int
-get_state_pathname(struct settings *settings)
+get_state_pathname(const struct settings *settings)
 {
 	const char *dir = getenv("XGD_RUNTIME_DIR");
 	char *display;
 	char *env;
 	int rc = -1, saved_errno;
-	t (display = get_display_string(settings));
+	try (display = get_display_string(settings));
 	if (!dir || !*dir)    dir = "/run";
-	t (env = malloc((strlen(dir) + sizeof("/radharc/") + strlen(display)) * sizeof(char)));
+	try (env = malloc((strlen(dir) + sizeof("/radharc/") + strlen(display)) * sizeof(char)));
 	stpcpy(stpcpy(stpcpy(env, dir), "/radharc/"), display);
 	rc = setenv("RADHARC_STATE", env, 1);
 fail:

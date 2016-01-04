@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "settings.h"
+#include "state.h"
 #include "haiku.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#define t(...)  do { if (__VA_ARGS__) goto fail; } while (0)
 
 
 /**
@@ -59,7 +60,13 @@ main(int argc, char *argv[])
 
 	check_timetravel(*argv);
 	parse_command_line(argc, argv, &settings);
+	argv0 = argv0 ? argv0 : "radharc";
+	t (get_state_pathname(&settings));
 
 	return 0;
+
+fail:
+	haiku(argv0);
+	return 1;
 }
 
