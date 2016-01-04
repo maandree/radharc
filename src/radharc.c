@@ -38,11 +38,13 @@ main(int argc, char *argv[])
 	parse_command_line(argc, argv, &settings);
 	argv0 = argv0 ? argv0 : "radharc";
 	t (get_state_pathname(&settings));
+	t (libred_init_colour());
 
 	return 0;
 
 fail:
 	libhaiku_perror(argv0);
+	libred_term_colour();
 	return 1;
 }
 
