@@ -51,16 +51,15 @@ static const char *
 random_haiku(const char *str, ... /*, NULL */)
 {
 	int n = 1;
-	const char *s;
+	const char *s = str;
 	va_list args;
 	va_start(args, str);
-	while (va_arg(args, const char *)) n++;
+	while (va_arg(args, const char *))  n++;
 	va_end(args);
-	if (n == 1) return str;
+	if (n == 1)  return str;
 	n = random_int(n);
-	if (!n) return str;
 	va_start(args, str);
-	while (n--) s = va_arg(args, const char *);
+	while (n--)  s = va_arg(args, const char *);
 	va_end(args);
 	return s;
 }

@@ -89,9 +89,10 @@ displayenvcmp(const void *a_, const void *b_)
 static char *
 escape_display(const char* str)
 {
-	char *r, *w, *rc = malloc((2 * strlen(str) + 1) * sizeof(char *));
+	char *r, *w, *rc = malloc((2 * strlen(str) + 1) * sizeof(char));
 	int s = 0;
 	if (!rc)  return NULL;
+	memcpy(rc, str, (strlen(str) + 1) * sizeof(char));
 	for (r = w = strchr(rc, '=') + 1; *r; r++) {
 		if (!s || (*r != '/')) {
 			if (strchr("@=/", *r))  *w++ = '@';
@@ -99,7 +100,7 @@ escape_display(const char* str)
 			s = (*r == '/');
 		}
 	}
-	if (s)  w[-2] = '\0';
+	w[s ? -2 : 0] = '\0';
 	return rc;
 }
 
@@ -123,12 +124,13 @@ get_display_string(const struct settings *settings)
 		if ((settings->monitors_arg[i] == 'd') && strchr(settings->monitors_id[i], '='))
 			len += 1 + strlen(displays[n++] = settings->monitors_id[i]);
 	if (n)  goto custom;
+	free(displays), displays = NULL;
 
 	if (!libgamma_list_methods(&method, 1, 0)) {
 		fprintf(stderr, "No display was found.\n"
 		                "DRM support missing.\n"
 		                "Can you even see?\n");
-		return errno = 0, NULL;
+		return free(displays), errno = 0, NULL;
 	}
 
 	var = libgamma_method_default_site_variable(method);
@@ -137,7 +139,7 @@ get_display_string(const struct settings *settings)
 	try (d = malloc((3 + strlen(var) + strlen(val)) * sizeof(char)));
 	stpcpy(stpcpy(stpcpy(stpcpy(d, "."), var), "="), val);
 	try (rc = escape_display(d));
-	return rc;
+	return free(d), rc;
 
 custom:
 	qsort(displays, n, sizeof(*displays), displayenvcmp);
@@ -146,10 +148,11 @@ custom:
 		try (d = escape_display(displays[i]));
 		r = stpcpy(stpcpy(r, "."), d), free(d), d = NULL;
 	}
+	free(displays);
 	return rc;
 
 fail:
-	saved_errno = errno, free(rc), free(d), errno = saved_errno;
+	saved_errno = errno, free(rc), free(d), free(displays), errno = saved_errno;
 	return NULL;
 }
 
@@ -164,8 +167,8 @@ int
 get_state_pathname(const struct settings *settings)
 {
 	const char *dir = getenv("XGD_RUNTIME_DIR");
-	char *display;
-	char *env;
+	char *display = NULL;
+	char *env = NULL;
 	int rc = -1, saved_errno;
 	try (display = get_display_string(settings));
 	if (!dir || !*dir)  dir = "/run";
