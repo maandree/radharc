@@ -254,7 +254,9 @@ get_clut_method(const char *display)
 int
 initialise_clut(const struct settings *settings)
 {
-	int method, error = 0, is_none = 0;
+#define NONE_METHOD  (method == INT_MAX)
+
+	int method = 0, error = 0, is_none = 0;
 	const char *sitename_;
 	char *sitename = NULL;
 	void *new;
@@ -267,8 +269,7 @@ initialise_clut(const struct settings *settings)
 		switch (settings->monitors_arg[i]) {
 		case 'd':
 			t ((method = get_clut_method(sitename_ = settings->monitors_id[i])) < 0);
-			if ((is_none = (method == INT_MAX)))
-				break;
+			if (NONE_METHOD)  break;
 			sitename_ = strchr(sitename_, '=');
 			if (sitename_)  try ((sitename = strdup(sitename_ + 1)));
 			t ((error = libgamma_site_initialise(sites + sites_n, method, sitename)));
@@ -277,11 +278,13 @@ initialise_clut(const struct settings *settings)
 			break;
 
 		case 'm':
-			;/* TODO -m */
+			if (NONE_METHOD)  break;
+			/* TODO -m */
 			break;
 
 		case 'e':
-			;/* TODO -e */
+			if (NONE_METHOD)  break;
+			/* TODO -e */
 			break;
 		}
 	}
