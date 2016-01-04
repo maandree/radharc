@@ -16,6 +16,7 @@
  */
 #include "settings.h"
 #include "arg.h"
+#include "haiku.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -235,7 +236,7 @@ parse_command_line(int argc, char *argv[], struct settings *settings)
 	}
 
 fail:
-	perror(argv0 ? argv0 : "radharc");
+	haiku(argv0 ? argv0 : "radharc");
 	exit(1);
 }
 

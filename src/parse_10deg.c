@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "haiku.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
@@ -46,7 +47,7 @@ ciexyy_to_srgb(double x, double y, double Y, double *r, double *g, double *b)
 }
 
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	double xyrgb[5];
 	struct stat attr;
@@ -54,15 +55,17 @@ int main(void)
 	while (fscanf(stdin, "%lf %lf\n", xyrgb + 0, xyrgb + 1) == 2) {
 		ciexyy_to_srgb(xyrgb[0], xyrgb[1], 1.0, xyrgb + 2, xyrgb + 3, xyrgb + 4);
 		if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb))
-			return perror(""), 1;
+			goto fail;
 	}
 	if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb)) /* sugar */
-		return perror(""), 1;
+		goto fail;
 	if (fstat(1, &attr))
-		return perror(""), 1;
+		goto fail;
 	if ((size_t)(attr.st_size) != (EXPECTED_ELEMENTS + 1) * 5 * sizeof(double))
 		return 1;
 
 	return 0;
+fail:
+	return haiku(argc ? *argv : "parse_10deg"), -1;
 }
 

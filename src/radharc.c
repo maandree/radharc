@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "settings.h"
+#include "haiku.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,6 +30,8 @@ char *argv0 = NULL;
 
 /**
  * Exit if time the is before year 0 in J2000.
+ * 
+ * @param  The name of the process, `NULL` if unknown.
  */
 #if defined(TIMETRAVELLER)
 static void
@@ -36,7 +39,7 @@ check_timetravel(const char *argv0)
 {
 	struct timespec now;
 	if (clock_gettime(CLOCK_REALTIME, &now))
-		perror(argv0 ? argv0 : "radharc"), exit(1);
+		haiku(argv0 ? argv0 : "radharc"), exit(1);
 	if (now.tv_nsec < (time_t)946728000L)
 		fprintf(stderr, "We have detected that you are a time-traveller"
 		                "(or your clock is not configured correctly.)"
