@@ -16,12 +16,13 @@
  */
 #include "settings.h"
 #include "arg.h"
-#include "haiku.h"
 #include "macros.h"
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
 #include <limits.h>
+
+#include <libhaiku.h>
 
 
 

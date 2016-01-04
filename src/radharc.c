@@ -16,8 +16,9 @@
  */
 #include "solar.h"
 #include "state.h"
-#include "haiku.h"
 #include "macros.h"
+
+#include <libhaiku.h>
 
 
 

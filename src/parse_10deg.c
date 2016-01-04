@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "haiku.h"
 #include "blackbody.h"
 #include "macros.h"
 #include <sys/stat.h>
@@ -59,6 +58,6 @@ int main(int argc, char *argv[])
 	t (fstat(STDOUT_FILENO, &attr));
 	return ((size_t)(attr.st_size) != (TEMPERATURES + 1) * 5 * sizeof(double));
 fail:
-	return haiku(argc ? *argv : "parse_10deg"), 1;
+	return perror(argc ? *argv : "parse_10deg"), 1;
 }
 
