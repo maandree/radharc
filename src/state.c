@@ -168,7 +168,7 @@ get_state_pathname(const struct settings *settings)
 	char *env;
 	int rc = -1, saved_errno;
 	try (display = get_display_string(settings));
-	if (!dir || !*dir)    dir = "/run";
+	if (!dir || !*dir)  dir = "/run";
 	try (env = malloc((strlen(dir) + sizeof("/radharc/") + strlen(display)) * sizeof(char)));
 	stpcpy(stpcpy(stpcpy(env, dir), "/radharc/"), display);
 	rc = setenv("RADHARC_STATE", env, 1);
