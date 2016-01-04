@@ -219,7 +219,7 @@ parse_command_line(int argc, char *argv[], struct settings *s)
 
 	return;
 fail:
-	haiku(argv0 ? argv0 : "radharc");
+	libhaiku_perror(argv0 ? argv0 : "radharc");
 	exit(1);
 }
 

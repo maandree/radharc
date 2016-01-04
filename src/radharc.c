@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "solar.h"
 #include "state.h"
 #include "macros.h"
 
+#include <libred.h>
 #include <libhaiku.h>
 
 
@@ -34,7 +34,7 @@ main(int argc, char *argv[])
 {
 	struct settings settings;
 
-	t (check_timetravel());
+	t (libred_check_timetravel());
 	parse_command_line(argc, argv, &settings);
 	argv0 = argv0 ? argv0 : "radharc";
 	t (get_state_pathname(&settings));
@@ -42,7 +42,7 @@ main(int argc, char *argv[])
 	return 0;
 
 fail:
-	haiku(argv0);
+	libhaiku_perror(argv0);
 	return 1;
 }
 

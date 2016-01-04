@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "state.h"
-#include "solar.h"
 #include "macros.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 
+#include <libred.h>
 #include <libgamma.h>
 
 
@@ -63,10 +63,10 @@ static size_t parts_n = 0;
 enum darkness
 get_darkness(double elevation)
 {
-	if (elevation > SOLAR_ELEVATION_SUNSET_SUNRISE)          return DAYTIME;
-	if (elevation > SOLAR_ELEVATION_CIVIL_DUSK_DAWN)         return CIVIL_TWILIGHT;
-	if (elevation > SOLAR_ELEVATION_NAUTICAL_DUSK_DAWN)      return NAUTICAL_TWILIGHT;
-	if (elevation > SOLAR_ELEVATION_ASTRONOMICAL_DUSK_DAWN)  return ASTRONOMICAL_TWILIGHT;
+	if (elevation > LIBRED_SOLAR_ELEVATION_SUNSET_SUNRISE)          return DAYTIME;
+	if (elevation > LIBRED_SOLAR_ELEVATION_CIVIL_DUSK_DAWN)         return CIVIL_TWILIGHT;
+	if (elevation > LIBRED_SOLAR_ELEVATION_NAUTICAL_DUSK_DAWN)      return NAUTICAL_TWILIGHT;
+	if (elevation > LIBRED_SOLAR_ELEVATION_ASTRONOMICAL_DUSK_DAWN)  return ASTRONOMICAL_TWILIGHT;
 	return NIGHT;
 }
 
