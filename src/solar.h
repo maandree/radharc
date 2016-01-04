@@ -93,3 +93,15 @@
  */
 double solar_elevation(double latitude, double longitude);
 
+
+/**
+ * Exit if time the is before year 0 in J2000.
+ * 
+ * @return  0 on success, -1 on error.
+ */
+#if defined(TIMETRAVELLER)
+int check_timetravel(void);
+#else
+# define check_timetravel(_)  0
+#endif
+

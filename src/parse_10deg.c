@@ -15,53 +15,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "haiku.h"
+#include "blackbody.h"
 #include "macros.h"
-#include <math.h>
 #include <sys/stat.h>
 
-#define HIGHEST  40000
-#define LOWEST   1000
-#define DELTA    100
-#define EXPECTED_ELEMENTS  ((HIGHEST - LOWEST) / DELTA + 1)
+
+
+/**
+ * The number of measured temperatures.
+ */
+#define TEMPERATURES  ((HIGHEST_TEMPERATURE - LOWEST_TEMPERATURE) / DELTA_TEMPERATURE + 1)
 
 
 
-static void
-ciexyy_to_srgb(double x, double y, double Y, double *r, double *g, double *b)
-{
-#define SRGB(C)  (((C) <= 0.0031308) ? (12.92 * (C)) : ((1.0 + 0.055) * pow((C), 1.0 / 2.4) - 0.055))
-	double X, Z;
-
-	/* Convert CIE xyY to CIE XYZ. */
-	X = Y * (y == 0 ? 0 : (x / y));
-	Z = Y * (y == 0 ? 0 : ((1 - x - y) / y));
-
-	/* Convert CIE XYZ to [0, 1] linear RGB. (ciexyz_to_linear) */
-	*r = ( 3.240450 * X) + (-1.537140 * Y) + (-0.4985320 * Z);
-	*g = (-0.969266 * X) + ( 1.876010 * Y) + ( 0.0415561 * Z);
-	*b = (0.0556434 * X) + (-0.204026 * Y) + ( 1.0572300 * Z);
-
-	/* Convert [0, 1] linear RGB to [0, 1] sRGB. */
-	SRGB(*r), SRGB(*g), SRGB(*b);
-}
-
-
+/**
+ * Create the lookup table of temperatures.
+ * 
+ * Standard input should be the file '10deg',
+ * standard output should be the table file
+ * and must be a regular file.
+ * 
+ * @param   argc  Should be 1.
+ * @param   argv  Should only contain the name of the process.
+ * @return        0 on success, 1 on error.
+ */
 int main(int argc, char *argv[])
 {
+#define  x  (xyrgb[0])
+#define  y  (xyrgb[1])
+#define  r  (xyrgb[2])
+#define  g  (xyrgb[3])
+#define  b  (xyrgb[4])
+
 	double xyrgb[5];
 	struct stat attr;
+	long int temp = LOWEST_TEMPERATURE;
 
-	while (fscanf(stdin, "%lf %lf\n", xyrgb + 0, xyrgb + 1) == 2) {
-		ciexyy_to_srgb(xyrgb[0], xyrgb[1], 1.0, xyrgb + 2, xyrgb + 3, xyrgb + 4);
+	for (; fscanf(stdin, "%lf %lf\n", &x, &y) == 2; temp += DELTA_TEMPERATURE) {
+		(temp == 6500) ? (r = g = b = 1.0) : ciexyy_to_srgb(x, y, 1.0, &r, &g, &b);
 		xwrite(STDOUT_FILENO, xyrgb, sizeof(xyrgb));
 	}
 	xwrite(STDOUT_FILENO, xyrgb, sizeof(xyrgb)); /* sugar */
 	t (fstat(STDOUT_FILENO, &attr));
-	if ((size_t)(attr.st_size) != (EXPECTED_ELEMENTS + 1) * 5 * sizeof(double))
-		return 1;
-
-	return 0;
+	return ((size_t)(attr.st_size) != (TEMPERATURES + 1) * 5 * sizeof(double));
 fail:
-	return haiku(argc ? *argv : "parse_10deg"), -1;
+	return haiku(argc ? *argv : "parse_10deg"), 1;
 }
 

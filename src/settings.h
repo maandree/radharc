@@ -135,11 +135,11 @@ struct settings {
 /**
  * Parse the command line.
  * 
- * @param  argc      The number of elements in `argv`.
- * @param  argv      The commnad line arguments including the zeroth elemenet.
- * @param  settings  Output parameter for the settings.
+ * @param  argc  The number of elements in `argv`.
+ * @param  argv  The commnad line arguments including the zeroth elemenet.
+ * @param  s     Output parameter for the settings.
  */
-void parse_command_line(int argc, char *argv[], struct settings *settings);
+void parse_command_line(int argc, char *argv[], struct settings *s);
 
 
 /**

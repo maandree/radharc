@@ -33,13 +33,11 @@
 static void
 usage(int condition)
 {
-	if (condition) {
-		fprintf(stderr,
-		        "Usage: %s [OPTIONS]...\n"
-	        	"See `man 1 radharc` for more information.\n",
-		        !argv0 ? "radharc" : argv0);
-		exit(2);
-	}
+	if (!condition) return;
+	fprintf(stderr,
+	        "Usage: %s [OPTIONS]...\n"
+	       	"See `man 1 radharc` for more information.\n",
+	        !argv0 ? "radharc" : argv0), exit(2);
 }
 
 
@@ -61,13 +59,8 @@ usage(int condition)
 static int
 parse_temperature(const char *str, long int *temp, int *direction, int lower)
 {
-	int dir = 0;
 	char *end;
-	switch (*str) {
-	case '-':  dir = -1;  break;
-	case '+':  dir = +1;  break;
-	default:              break;
-	}
+	int dir = *str == '-' ? -1 : *str == '+' ? +1 : 0;
 	str += !!dir;
 	t (dir && !direction);
 	if (dir) *direction = dir;
@@ -90,33 +83,24 @@ fail:
 static int
 parse_timespec(const char *str, struct timespec *ts)
 {
+#define DIGIT(var, c)          var += (var) * 10 + ((c) & 15);
+#define ALL_DIGITS(cond, var)  while ((cond) && isdigit(*str))  DIGIT(var, *str++)
+
 	int points = 0;
 	memset(ts, 0, sizeof(*ts));
 
 	/* Parse seconds. */
 	t (!isdigit(*str));
-	while (isdigit(*str)) {
-		ts->tv_sec *= 10;
-		ts->tv_sec += *str++ & 15;
-	}
+	ALL_DIGITS(1, ts->tv_sec);
 
 	/* End? */
 	if (!*str)  return 0;
 	t (*str != '.');
 
 	/* Parse nanoseconds.*/
-	for (; (points++ < 9) && isdigit(*str); str++) {
-		ts->tv_nsec *= 10;
-		ts->tv_nsec += *str++ & 15;
-	}
-	if (points == 9) {
-		t (!isdigit(*str));
-		if (*str++ >= '5') {
-			ts->tv_nsec += 1;
-			if (ts->tv_nsec == 1000000000L)
-				ts->tv_sec += 1, ts->tv_nsec = 0;
-		}
-	}
+	ALL_DIGITS(points++ < 9, ts->tv_nsec);
+	if ((points == 9) && isdigit(*str) && (*str++ >= '5') && (++(ts->tv_nsec) == 1000000000L))
+		ts->tv_sec += 1, ts->tv_nsec = 0;
 	while (isdigit(*str))  str++;
 	t (*str);
 
@@ -156,84 +140,81 @@ parse_location(char *str, double *loc, double limit)
  * @param  settings  Output parameter for the settings.
  */
 void
-parse_command_line(int argc, char *argv[], struct settings *settings)
+parse_command_line(int argc, char *argv[], struct settings *s)
 {
 	int location_set = 0;
 	char *p;
 	char *arg;
 	int c = 0;
 
-	memset(settings, 0, sizeof(*settings));
-	settings->natural_temp = 6500;
-	settings->day_temp     = 5500;
-	settings->night_temp   = 3500;
-	settings->trans_speed  = 50;
+	memset(s, 0, sizeof(*s));
+	s->natural_temp = 6500;
+	s->day_temp     = 5500;
+	s->night_temp   = 3500;
+	s->trans_speed  = 50;
 
+#define BOOLEAN(var)  var = !plus;  break
 #define PLUS(...)  (plus ? (__VA_ARGS__) : 0)
 	ARGBEGIN {
 	case 'l':
 		PLUS(location_set = 0);
 		usage(!(p = strchr(arg = ARGF(), ':')));
 		*p++ = '\0', location_set = 1;
-		usage(parse_location(arg, &(settings->latitude),  90.0));
-		usage(parse_location(arg, &(settings->longitude), 180.0));
+		usage(parse_location(arg, &(s->latitude),   90.0));
+		usage(parse_location(p,   &(s->longitude), 180.0));
 		break;
 	case 't':
-		PLUS(settings->day_temp = 5500, settings->night_temp = 3500);
-		settings->temp = settings->day_temp = settings->night_temp = 0;
-		settings->temp_direction = 0;
+		PLUS(s->day_temp = 5500, s->night_temp = 3500);
+		s->temp = s->day_temp = s->night_temp = 0, s->temp_direction = 0;
 		if ((p = strchr(arg = ARGF(), ':'))) {
 			*p++ = '\0';
-			usage(parse_temperature(arg, &(settings->day_temp), NULL, 1000));
-			usage(parse_temperature(p, &(settings->night_temp), NULL, 1000));
+			usage(parse_temperature(arg, &(s->day_temp), NULL, 1000));
+			usage(parse_temperature(p, &(s->night_temp), NULL, 1000));
 		} else {
-			usage(parse_temperature(arg, &(settings->temp), &(settings->temp_direction), 1000));
+			usage(parse_temperature(arg, &(s->temp), &(s->temp_direction), 1000));
 		}
 		break;
 	case 'T':
-		PLUS(settings->natural_temp = 6500);
-		usage(parse_temperature(ARGF(), &(settings->natural_temp), NULL, 1000));
+		PLUS(s->natural_temp = 6500);
+		usage(parse_temperature(ARGF(), &(s->natural_temp), NULL, 1000));
 		break;
 	case 's':
-		PLUS(settings->trans_speed = 50);
-		settings->trans_speed = 0;
-		usage(parse_timespec(ARGF(), &(settings->transition)));
+		PLUS(s->trans_speed = 50);
+		s->trans_speed = 0;
+		usage(parse_timespec(ARGF(), &(s->transition)));
 		break;
 	case 'S':
-		PLUS(settings->trans_speed = 0);
-		usage(parse_temperature(ARGF(), &(settings->trans_speed), NULL, 1));
+		PLUS(s->trans_speed = 0);
+		usage(parse_temperature(ARGF(), &(s->trans_speed), NULL, 1));
 		break;
 	case 'h':
-		settings->hookpath = (plus ? NULL : ARGF());
+		s->hookpath = (plus ? NULL : ARGF());
 		break;
 	case 'd': c++; /* Fall though. */
 	case 'e': c++; /* Fall though. */
 	case 'm': c++;
-		PLUS(settings->monitors_n = 0, free(settings->monitors_id), free(settings->monitors_arg));
-		settings->monitors_n++;
-		xrealloc(&(settings->monitors_id),  settings->monitors_n);
-		xrealloc(&(settings->monitors_arg), settings->monitors_n);
-		settings->monitors_id[settings->monitors_n - 1] = ARGF();
-		settings->monitors_arg[settings->monitors_n - 1] = (c == 3 ? 'm' : c == 2 ? 'e' : 'd'), c = 0;
+		PLUS(s->monitors_n = 0, free(s->monitors_id), free(s->monitors_arg));
+		xrealloc(&(s->monitors_id),  s->monitors_n + 1);
+		xrealloc(&(s->monitors_arg), s->monitors_n + 1);
+		s->monitors_id[s->monitors_n] = ARGF();
+		s->monitors_arg[s->monitors_n++] = (c == 3 ? 'm' : c == 2 ? 'e' : 'd'), c = 0;
 		break;
-	case 'p':  settings->print_status = !plus;  break;
-	case 'n':  settings->panic_start  = !plus;  break;
-	case 'N':  settings->panic_else   = !plus;  break;
-	case 'o':  settings->set_and_exit = !plus;  break;
-	case 'x':  settings->ignore_calib = !plus;  break;
-	case 'i':  settings->negative     = !plus;  break;
-	case 'b':  settings->use_bus      = !plus;  break;
-	default:   usage(1);                        break;
+	case 'p':  BOOLEAN(s->print_status);
+	case 'n':  BOOLEAN(s->panic_start);
+	case 'N':  BOOLEAN(s->panic_else);
+	case 'o':  BOOLEAN(s->set_and_exit);
+	case 'x':  BOOLEAN(s->ignore_calib);
+	case 'i':  BOOLEAN(s->negative);
+	case 'b':  BOOLEAN(s->use_bus);
+	default:   usage(1);  break;
 	} ARGEND;
 	usage(argc);
 
-	if (!location_set && !(settings->temp)) {
+	if (!location_set && !(s->temp))
 		fprintf(stderr,
 			"%s: The -l option is mandatory, unless single value -t is used. "
 	        	"See `man 1 radharc` for more information.\n",
-		        !argv0 ? "radharc" : argv0);
-		exit(2);
-	}
+		        !argv0 ? "radharc" : argv0), exit(2);
 
 	return;
 fail:
@@ -254,18 +235,15 @@ marshal_settings(char *buffer, const struct settings *settings)
 {
 #define MARSHAL(N, DATUMP)  (n += aux = (N), (buf ? (memcpy(buf, DATUMP, aux), buf += aux, 0) : 0))
 
-	size_t n = 0, i = 0;
-	size_t aux;
+	size_t aux, n = 0, i = 0;
 	char *buf = buffer;
 
 	if (buffer)  i = marshal_settings(NULL, settings);
 	MARSHAL(sizeof(i), &i);
 
 	MARSHAL(sizeof(*settings), settings);
-	if (settings->hookpath)
-		MARSHAL(strlen(settings->hookpath) + 1, settings->hookpath);
-	if (settings->monitors_arg)
-		MARSHAL(settings->monitors_n, settings->monitors_arg);
+	if (settings->hookpath)      MARSHAL(strlen(settings->hookpath) + 1, settings->hookpath);
+	if (settings->monitors_arg)  MARSHAL(settings->monitors_n, settings->monitors_arg);
 	for (i = 0; i < settings->monitors_n; i++)
 		MARSHAL(strlen(settings->monitors_id[i]) + 1, settings->monitors_id[i]);
 
@@ -286,10 +264,8 @@ unmarshal_settings(char *buffer, struct settings **settings)
 #define UNMARSHAL(N, DATUMP)  (aux = (N), memcpy((DATUMP), buf, aux), buf += aux)
 
 	size_t n, aux, i;
-	struct settings *s = NULL;
-	struct settings s_;
+	struct settings s_, *s = NULL;
 	char *buf = buffer;
-	int saved_errno;
 
 	UNMARSHAL(sizeof(n), &n);
 	if (!(s = *settings = malloc(n - sizeof(n))))  return 0;
@@ -297,12 +273,12 @@ unmarshal_settings(char *buffer, struct settings **settings)
 
 	UNMARSHAL(sizeof(s_), &s_);
 	if (s_.monitors_n) {
-		try (*s = s_, s->monitors_id = malloc(s_.monitors_n * sizeof(char*)));
-		try (*s = s_, s->monitors_arg = malloc(s_.monitors_n * sizeof(char)));
+		*s = s_;
+		xmalloc(&(s->monitors_id),  s_.monitors_n);
+		xmalloc(&(s->monitors_arg), s_.monitors_n);
 	}
 
-	s->hookpath = buf;
-	buf = strchr(buf, '\0') + 1;
+	buf = strchr(s->hookpath = buf, '\0') + 1;
 
 	UNMARSHAL(s_.monitors_n, s->monitors_arg);
 	for (i = 0; i < s_.monitors_n; i++)
@@ -311,9 +287,7 @@ unmarshal_settings(char *buffer, struct settings **settings)
 	return n;
 
 fail:
-	saved_errno = errno;
-	free(s->monitors_id), free(s->monitors_arg), free(s), *settings = NULL;
-	errno = saved_errno;
+	CLEANUP(free(s->monitors_id), free(s->monitors_arg), free(s), *settings = NULL);
 	return 0;
 }
 

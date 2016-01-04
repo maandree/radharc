@@ -19,6 +19,7 @@
 #include "macros.h"
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #include <libgamma.h>
 
@@ -71,6 +72,43 @@ get_darkness(double elevation)
 
 
 /**
+ * Remove the screen number for a display server instance identifier.
+ * 
+ * @param   s  Display server instance identifier.
+ * @return     Set the value to which this pointer points to '.'. Do nothing if it is `NULL`.
+ */
+static char *
+strip_screen(char *s)
+{
+#define S(V, CD)  ((V = ((CD)[1] == 'r' ? strrchr : strchr)(V, (CD)[0])))
+	char *p = strchr(s, '=');
+	if ((p++) && (*p != '/') && S(p, ":r") && S(p, ".l"))  *p = '\0';  else  p = NULL;
+	return p;
+#undef S
+}
+
+
+/**
+ * `stpmulcpy(o, a, b, c, NULL)` is equivalent to
+ * `stpcpy(stpcpy(stpcpy(o, a), b), c)`
+ */
+#ifdef __GNUC__
+__attribute__((__sentinel__))
+#endif
+static char *
+stpmulcpy(char *out, ... /*, NULL */)
+{
+	va_list args;
+	char *p = out;
+	const char *s;
+	va_start(args, out);
+	while ((s = va_arg(args, const char *)))  p = stpcpy(p, s);
+	va_end(args);
+	return p;
+}
+
+
+/**
  * Compare two display server environment strings.
  * 
  * @param   a_  One of the string.
@@ -80,7 +118,6 @@ get_darkness(double elevation)
 static int
 displayenvcmp(const void *a_, const void *b_)
 {
-#define S(V, CD)  ((V = ((CD)[1] == 'r' ? strrchr : strchr)(V, (CD)[0])))
 #ifdef __GNUC__
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
@@ -90,19 +127,14 @@ displayenvcmp(const void *a_, const void *b_)
 #ifdef __GNUC__
 # pragma GCC diagnostic pop
 #endif
-	char *p = strchr(a, '=') + 1;
-	char *q = strchr(b, '=') + 1;
+	char *p = strip_screen(a);
+	char *q = strip_screen(b);
 	int rc;
 
-	if ((*p != '/') && S(p, ":r") && S(p, ".l"))  *p = '\0';  else  p = NULL;
-	if ((*q != '/') && S(p, ":r") && S(p, ".l"))  *q = '\0';  else  q = NULL;
-
 	rc = strcmp(a, b);
-
-	if (*p)  *p = '.';
-	if (*q)  *q = '.';
+	if (p)  *p = '.';
+	if (q)  *q = '.';
 	return rc;
-#undef S
 }
 
 
@@ -117,13 +149,11 @@ escape_display(const char* str)
 {
 	char *r, *w, *rc = NULL;
 	int s = 0;
-	xmalloc(&rc, 2 * strlen(str) + 1);
-	strcpy(rc, str);
+	xmalloc(&rc, 2 * strlen(str) + 1); strcpy(rc, str);
 	for (r = w = strchr(rc, '=') + 1; *r; r++) {
 		if (!s || (*r != '/')) {
 			if (strchr("@=/", *r))  *w++ = '@';
-			*w++ = (*r == '/' ? 's' : *r);
-			s = (*r == '/');
+			*w++ = ((s = (*r == '/')) ? 's' : *r);
 		}
 	}
 	w[s ? -2 : 0] = '\0';
@@ -141,8 +171,10 @@ fail:
 static char *
 get_display_string(const struct settings *settings)
 {
+#define DISPLAY(VAR, D)  p = strip_screen(D); try (VAR = escape_display(D)); if (p)  *p = '.', p = NULL
+
 	const char *var, *val;
-	char *r, *d = NULL, *rc = NULL, **displays;
+	char *r, *p = NULL, *d = NULL, *rc = NULL, **displays;
 	size_t i, n = 0, len = 0;
 	int method;
 
@@ -157,28 +189,29 @@ get_display_string(const struct settings *settings)
 		fprintf(stderr, "No display was found.\n"
 		                "DRM support missing.\n"
 		                "Can you even see?\n");
-		return free(displays), errno = 0, NULL;
+		return errno = 0, NULL;
 	}
 
 	var = libgamma_method_default_site_variable(method);
 	val = libgamma_method_default_site(method);
-	if (!val)  return strdup("");
+	if (!val || !*val)  return strdup("");
 	xmalloc(&d, 3 + strlen(var) + strlen(val));
-	stpcpy(stpcpy(stpcpy(stpcpy(d, "."), var), "="), val);
-	try (rc = escape_display(d)); /* TODO strip screen number */
+	stpmulcpy(d, ".", var, "=", val, NULL);
+	DISPLAY(rc, d);
 	return free(d), rc;
 
 custom:
 	qsort(displays, n, sizeof(*displays), displayenvcmp);
 	xmalloc(&rc, 2 * len + 1);
 	for (r = rc, i = 0; i < n; i++) {
-		try (d = escape_display(displays[i])); /* TODO see above */
-		r = stpcpy(stpcpy(r, "."), d), free(d), d = NULL;
+		DISPLAY(d, displays[i]);
+		r = stpmulcpy(r, ".", d, NULL), free(d), d = NULL;
 	}
 	free(displays);
 	return rc;
 
 fail:
+	if (p)  *p = '.';
 	CLEANUP(free(rc), free(d), free(displays));
 	return NULL;
 }
@@ -200,7 +233,7 @@ get_state_pathname(const struct settings *settings)
 	try (display = get_display_string(settings));
 	if (!dir || !*dir)  dir = "/run";
 	xmalloc(&env, strlen(dir) + sizeof("/radharc/") + strlen(display));
-	stpcpy(stpcpy(stpcpy(env, dir), "/radharc/"), display);
+	stpmulcpy(env, dir, "/radharc/", display, NULL);
 	rc = setenv("RADHARC_STATE", env, 1);
 fail:
 	CLEANUP(free(env), free(display));
@@ -217,12 +250,13 @@ fail:
 static int
 get_clut_method(const char *display)
 {
-#define HAIKU(TEXT)  t ((msg = (TEXT)))
+#define HAIKU(TEXT)    t ((msg = (TEXT)))
+#define TEST(STR, ID)  if (!strcasecmp(display, STR))  return ID
 
+	const char *env, *msg;
 	int method;
-	const char *env;
-	const char *msg;
 
+	/* Default? */
 	if (!display) {
 		if (!libgamma_list_methods(&method, 1, 0))
 			HAIKU("No display was found.\n"
@@ -230,18 +264,25 @@ get_clut_method(const char *display)
 			      "Can you even see?\n");
 		return method;
 	}
-	if (!strcasecmp(display, "none"))  return INT_MAX;
-	if (!strcasecmp(display, "drm"))   return LIBGAMMA_METHOD_LINUX_DRM;
+
+	/* Single-sited? */
+	TEST("none", INT_MAX);
+	TEST("drm", LIBGAMMA_METHOD_LINUX_DRM);
+
+	/* Unrecognised single-sited? */
 	if (!strchr(display, '='))
 		HAIKU("Specified display\n"
 		      "cannot be recognised.\n"
 		      "Try something else.\n");
 
+	/* Multi-sited? */
 	for (method = 0; method < LIBGAMMA_METHOD_COUNT; method++) {
 		env = libgamma_method_default_site_variable(method);
 		if (env && (strstr(display, env) == display) && (display[strlen(env)] == '='))
 			return method;
 	}
+
+	/* Unrecognised multi-sited. */
 	HAIKU("Specified display\n"
 	      "cannot be recognised.\n"
 	      "Try to recompile.\n");
@@ -280,8 +321,7 @@ initialise_clut(const struct settings *settings)
 			sitename_ = strchr(sitename_, '=');
 			xstrdup(&sitename, sitename_ ? sitename_ + 1 : NULL);
 			t ((error = libgamma_site_initialise(sites + sites_n, method, sitename)));
-			sitename = NULL;
-			site = sites[sites_n++];
+			sitename = NULL, site = sites[sites_n++];
 			xrealloc(&parts, parts_n + site.partitions_available);
 			for (j = 0; j < site.partitions_available; j++) {
 				t ((error = libgamma_partition_initialise(parts + parts_n, &site, j)));

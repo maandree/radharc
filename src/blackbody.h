@@ -18,6 +18,37 @@
 
 
 /**
+ * The highest colour temperature in the table.
+ */
+#define HIGHEST_TEMPERATURE  40000
+
+/**
+ * The lowest colour temperature in the table.
+ */
+#define LOWEST_TEMPERATURE  1000
+
+/**
+ * The temperature difference between the colours in the table.
+ */
+#define DELTA_TEMPERATURE  100
+
+
+
+/**
+ * Convert from CIE xyY to [0, 1] sRGB.
+ * 
+ * @param  x  The 'x' component.
+ * @param  y  The 'y' component.
+ * @param  Y  The 'Y' component.
+ * @param  r  Output parameter for the “red” value.
+ *            (Seriously, sRGB red is orange, just look at it fullscreen.)
+ * @param  g  Output parameter for the green value.
+ * @param  b  Output parameter for the blue value.
+ */
+void
+ciexyy_to_srgb(double x, double y, double Y, double *r, double *g, double *b);
+
+/**
  * Get the [0, 1] sRGB values of a colour temperature.
  * 
  * @param   fd    File descriptor for the colour table.

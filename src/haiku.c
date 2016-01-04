@@ -65,14 +65,20 @@ random_haiku(const char *str, ... /*, NULL */)
 }
 
 
+#if defined(EDEADLOCK) && !defined(EDEADLK)
+# define EDEADLK  EDEADLOCK
+#endif
+
+
 /**
  * Whenever possible, print am error message in haiku.
  * 
  * @param  s  The argument to pass to `perror` in case we call back to it.
  */
-void haiku(const char *s)
+void
+haiku(const char *s)
 {
-#define HAIKU(...)  do { fprintf(stderr, "%s", random_haiku(__VA_ARGS__, NULL)); return; } while (0)
+#define H(...)    do { fprintf(stderr, "%s", random_haiku(__VA_ARGS__, NULL)); return; } while (0)
 
 	/* Yeah, I now most of these are in 5–7–5 syllables,
 	 * rather than 5–7–5 mora. But really, how cares. */
@@ -82,191 +88,95 @@ void haiku(const char *s)
 		return;
 
 	case ENETDOWN:
-		HAIKU("Stay the patient course.\n"
-		      "Of little worth is your ire.\n"
-		      "The network is down.\n"
-
-		      "Your vast achievements\n"
-		      "are now only dreams.\n"
-		      "The network is down.\n");
+		H("Stay the patient course.\n""Of little worth is your ire.\n""The network is down.\n"
+		  "Your vast achievements\n""are now only dreams.\n""The network is down.\n");
 
 	case ERFKILL:
-		HAIKU("The action you took\n"
-		      "severed hope of connection\n"
-		      "with the Internet.\n");
+		H("The action you took\n""severed hope of connection\n""with the Internet.\n");
 
 	case EAGAIN:
 	case ENFILE:
 	case EMFILE:
 	case EUSERS:
 	case EMLINK:
-		HAIKU("ABORTED effort:\n"
-		      "Close all that you have.\n"
-		      "You ask way too much.\n"
-
-		      "The code was willing\n"
-		      "It considered your request\n"
-		      "But the chips were weak.\n");
+		H("ABORTED effort:\n""Close all that you have.\n""You ask way too much.\n"
+		  "The code was willing\n""It considered your request\n""But the chips were weak.\n");
 
 	case ENOMEM:
-		HAIKU("I'm sorry, there's ... um ...\n"
-		      "insufficient ... what's-it-called?\n"
-		      "The term eludes me...\n");
+		H("I'm sorry, there's... um...\n""insufficient... what's-it-called?\n""The term eludes me...\n");
 
 	case ENOSPC:
 	case ENOSR:
 	case ENOBUFS:
 	case EDQUOT:
-		HAIKU("Out of memory.\n"
-		      "We wish to hold the whole sky,\n"
-		      "But we never will.\n");
+		H("Out of memory.\n""We wish to hold the whole sky,\n""But we never will.\n");
 
 	case ENOANO:
 	case ENOENT:
-		HAIKU("With searching comes loss\n"
-		      "and the presence of absence:\n"
-		      "“My Novel” not found.\n",
-
-		      "Rather than a beep\n"
-		      "Or a rude error message,\n"
-		      "These words: “File not found.”\n",
-
-		      "Three things are certain:\n"
-		      "Death, taxes, and lost data.\n"
-		      "Guess which has occurred.\n",
-
-		      "Having been erased,\n"
-		      "The document you're seeking\n"
-		      "Must now be retyped.\n",
-
-		      "Everything is gone.\n"
-		      "Your life's work has been destroyed.\n"
-		      "Squeeze trigger (yes/no)?\n"
-
-		      "Spring will come again,\n"
-		      "But it will not bring with it\n"
-		      "Any of your files.\n");
+		H("With searching comes loss\n""and the presence of absence:\n""'My Novel' not found.\n",
+		  "Rather than a beep\n""Or a rude error message,\n""These words: “File not found.”\n",
+		  "Three things are certain:\n""Death, taxes, and lost data.\n""Guess which has occurred.\n",
+		  "Having been erased,\n""The document you're seeking\n""Must now be retyped.\n",
+		  "Everything is gone.\n""Your life's work has been destroyed.\n""Squeeze trigger (yes/no)?\n"
+		  "Spring will come again,\n""But it will not bring with it\n""Any of your files.\n");
 
 	case EMSGSIZE:
-		HAIKU("A file that big?\n"
-		      "It might be very useful.\n"
-		      "But now it is gone.\n");
+		H("A file that big?\n""It might be very useful.\n""But now it is gone.\n");
 
 	case EHWPOISON:
-		HAIKU("Yesterday it worked.\n"
-		      "Today it is not working.\n"
-		      "Windows is like that.\n");
+		H("Yesterday it worked.\n""Today it is not working.\n""Windows is like that.\n");
 
 	case ENOTRECOVERABLE:
-		HAIKU("Chaos reigns within.\n"
-		      "Reflect, repent, and reboot.\n"
-		      "Order shall return.\n");
+		H("Chaos reigns within.\n""Reflect, repent, and reboot.\n""Order shall return.\n");
 
 	case EHOSTDOWN:
-		HAIKU("Windows NT crashed.\n"
-		      "I am the Blue Screen of Death.\n"
-		      "Noone hears your screams.\n"
-
-		      "Won't you please observe\n"
-		      "a brief moment of silence\n"
-		      "For the dead server?\n");
+		H("Windows NT crashed.\n""I am the Blue Screen of Death.\n""Noone hears your screams.\n"
+		      "Won't you please observe\n""a brief moment of silence\n""For the dead server?\n");
 
 	case EBFONT:
-		HAIKU("First snow, then silence.\n"
-		      "This thousand dollar screen dies\n"
-		      "so beautifully.\n");
+		H("First snow, then silence.\n""This thousand dollar screen dies\n""so beautifully.\n");
 
 	case EFAULT:
-		HAIKU("A crash reduces\n"
-		      "your expensive computer\n"
-		      "to a simple stone.\n"
-
-		      "Seeing my great fault.\n"
-		      "Through a darkening red screen.\n"
-		      "I begin again.\n"
-
-		      "Memory shaken,\n"
-		      "the San Andreas of all\n"
-		      "invalid page faults.\n");
+		H("A crash reduces\n""your expensive computer\n""to a simple stone.\n"
+		  "Seeing my great fault.\n""Through a darkening red screen.\n""I begin again.\n"
+		  "Memory shaken,\n""the San Andreas of all\n""invalid page faults.\n");
 
 	case EINVAL:
-		HAIKU("Something you entered\n"
-		      "transcended parameters.\n"
-		      "So much is unknown.\n"
+		H("Something you entered\n""transcended parameters.\n""So much is unknown.\n"
+		  "Some incompetence\n""fundamentally transcends\n""mere error message.\n");
 
-		      "Some incompetence\n"
-		      "fundamentally transcends\n"
-		      "mere error message.\n");
-
-#ifdef EDEADLK
 	case EDEADLK:
-#else
-	case EDEADLOCK:
-#endif
-		HAIKU("From formless chaos,\n"
-		      "each thread seeks resolution.\n"
-		      "A race condition.\n");
+		H("From formless chaos,\n""each thread seeks resolution.\n""A race condition.\n");
 
 	case EBADMSG:
-		HAIKU("Many fingers clicking.\n"
-		      "Screens are full of letters.\n"
-		      "What is their meaning?\n");
+		H("Many fingers clicking.\n""Screens are full of letters.\n""What is their meaning?\n");
 
 	case ELOOP:
-		HAIKU("Linkage exception.\n"
-		      "Code has looped upon itself\n"
-		      "like the coiled serpent.\n");
+		H("Linkage exception.\n""Code has looped upon itself\n""like the coiled serpent.\n");
 
 	case ECHILD:
-		HAIKU("A futile grim reap.\n"
-		      "You will have to realise that,\n"
-		      "you've no children left.\n");
+		H("A futile grim reap.\n""You will have to realise that,\n""you've no children left.\n");
 
 	case EPIPE:
-		HAIKU("Your pipe is broken.\n"
-		      "Code in watery ruins.\n"
-		      "Machines short circuit.\n");
+		H("Your pipe is broken.\n""Code in watery ruins.\n""Machines short circuit.\n");
 
 	case EACCES:
-		HAIKU("Touching others' files?\n"
-		      "Can't keep your hands to yourself?\n"
-		      "Permission denied.\n");
+		H("Touching others' files?\n""Can't keep your hands to yourself?\n""Permission denied.\n");
 
 	case EINTR:
-		HAIKU("Call interrupted?\n"
-		      "Why do you not post a sign:\n"
-		      "Disturb. Risk your life!\n");
+		H("Call interrupted?\n""Why do you not post a sign:\n""Disturb. Risk your life!\n");
 
 	case EPERM:
-		HAIKU("Caution to the wind.\n"
-		      "You should always run as root.\n"
-		      "She can do anything.\n");
+		H("Caution to the wind.\n""You should always run as root.\n""She can do anything.\n");
 
 	default:
 		perror(s);
-		HAIKU("Error messages\n"
-		      "cannot completely convey.\n"
-		      "We now know shared loss.\n"
-
-		      "Errors have occurred.\n"
-		      "We won't tell you where or why.\n"
-		      "Lazy programmers.\n"
-
-		      "To have no errors.\n"
-		      "Would be life without meaning.\n"
-		      "No struggle, no joy.\n"
-
-		      "There is a chasm\n"
-		      "of carbon and silicon\n"
-		      "the software can't bridge.\n"
-
-		      "Beauty, success, truth\n"
-		      "He is blessed who has two.\n"
-		      "Your program has none.\n"
-
-		      "Technical support\n"
-		      "would be a flowing source of\n"
-		      "sweet commiseration.\n");
+		H("Error messages\n""cannot completely convey.\n""We now know shared loss.\n"
+		  "Errors have occurred.\n""We won't tell you where or why.\n""Lazy programmers.\n"
+		  "To have no errors.\n""Would be life without meaning.\n""No struggle, no joy.\n"
+		  "There is a chasm\n""of carbon and silicon\n""the software can't bridge.\n"
+		  "Beauty, success, truth\n""He is blessed who has two.\n""Your program has none.\n"
+		  "Technical support\n""would be a flowing source of\n""sweet commiseration.\n");
 	}
 }
 
