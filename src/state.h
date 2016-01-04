@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "settings.h"
 
 
 
@@ -62,4 +63,12 @@ enum darkness {
  * @return              The time of the day.
  */
 enum darkness get_darkness(double elevation);
+
+/**
+ * Set $RADHARC_STATE.
+ * 
+ * @param   settings  The settings.
+ * @return            0 on success, -1 on error.
+ */
+int get_state_pathname(struct settings *settings);
 

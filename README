@@ -127,11 +127,15 @@ SIGNALS
 		order they where selected.
 
 ENVIRONMENT
+	XDG_RUNTIME_DIR
+		This environment variable names the directory in which
+		the state file is stored. If unset or empty, /run is
+		used.
+
 	RADHARC_STATE
-		The pathname to the state file, will be
-		determined automatically if not set.
-		If not set, you may only have one instance
-		running per display server instance.
+		The pathname to the state file, will be determined
+		automatically if not set. If not set, you may only
+		have one instance running per display server instance.
 
 RATIONALE
 	Your location is determined use GeoClue because it clunky,

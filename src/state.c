@@ -16,6 +16,14 @@
  */
 #include "state.h"
 #include "solar.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include <libgamma.h>
+
+#define t(...)  do { if (!(__VA_ARGS__)) goto fail; } while (0)
 
 
 
@@ -33,5 +41,138 @@ get_darkness(double elevation)
 	if (elevation > SOLAR_ELEVATION_NAUTICAL_DUSK_DAWN)      return NAUTICAL_TWILIGHT;
 	if (elevation > SOLAR_ELEVATION_ASTRONOMICAL_DUSK_DAWN)  return ASTRONOMICAL_TWILIGHT;
 	return NIGHT;
+}
+
+
+/**
+ * Compare two display server environment strings.
+ * 
+ * @param   a_  One of the string.
+ * @param   b_  The other string.
+ * @return      -1, 0, or +1.
+ */
+static int
+displayenvcmp(const void *a_, const void *b_)
+{
+#define S(V, CD)  ((V = ((CD)[1] == 'r' ? strrchr : strchr)(V, (CD)[0])))
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+#endif
+	char *a = a_;
+	char *b = b_;
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
+	char *p = strchr(a, '=') + 1;
+	char *q = strchr(b, '=') + 1;
+	int rc;
+
+	if ((*p != '/') && S(p, ":r") && S(p, ".l"))  *p = '\0';  else  p = NULL;
+	if ((*q != '/') && S(p, ":r") && S(p, ".l"))  *q = '\0';  else  q = NULL;
+
+	rc = strcmp(a, b);
+
+	if (*p)  *p = '.';
+	if (*q)  *q = '.';
+	return rc;
+#undef S
+}
+
+
+/**
+ * Make an display string safe for a pathname.
+ * 
+ * @param   str  The string.
+ * @return       A safe version of the string, `NULL` on error.
+ */
+static char *
+escape_display(const char* str)
+{
+	char *r, *w, *rc = malloc((2 * strlen(str) + 1) * sizeof(char *));
+	int s = 0;
+	if (!rc)  return NULL;
+	for (r = w = strchr(rc, '=') + 1; *r; r++) {
+		if (!s || (*r != '/')) {
+			if (strchr("@=/", *r))  *w++ = '@';
+			*w++ = (*r == '/' ? 's' : *r);
+			s = (*r == '/');
+		}
+	}
+	if (s)  w[-2] = '\0';
+	return rc;
+}
+
+
+/**
+ * The string of display servers.
+ * 
+ * @param   settings  The settings.
+ * @return            The string, `NULL` on error.
+ */
+static char *
+get_display_string(struct settings *settings)
+{
+	const char *var, *val;
+	char *r, *d = NULL, *rc = NULL, **displays;
+	size_t i, n = 0, len = 0;
+	int method, saved_errno;
+
+	t (displays = malloc(settings->monitors_n * sizeof(char *)));
+	for (i = 0; i < settings->monitors_n; i++)
+		if ((settings->monitors_arg[i] == 'd') && strchr(settings->monitors_id[i], '='))
+			len += 1 + strlen(displays[n++] = settings->monitors_id[i]);
+	if (n)  goto custom;
+
+	if (!libgamma_list_methods(&method, 1, 0)) {
+		fprintf(stderr, "No display was found.\n"
+		                "DRM support missing.\n"
+		                "Can you even see?\n");
+		return errno = 0, NULL;
+	}
+
+	var = libgamma_method_default_site_variable(method);
+	val = libgamma_method_default_site(method);
+	if (!val)  return strdup("");
+	t (d = malloc((3 + strlen(var) + strlen(val)) * sizeof(char)));
+	stpcpy(stpcpy(stpcpy(stpcpy(d, "."), var), "="), val);
+	t (rc = escape_display(d));
+	return rc;
+
+custom:
+	qsort(displays, n, sizeof(*displays), displayenvcmp);
+	t (r = rc = malloc((2 * len + 1) * sizeof(char)));
+	for (i = 0; i < n; i++) {
+		t (d = escape_display(displays[i]));
+		r = stpcpy(stpcpy(r, "."), d), free(d), d = NULL;
+	}
+	return rc;
+
+fail:
+	saved_errno = errno, free(rc), free(d), errno = saved_errno;
+	return NULL;
+}
+
+
+/**
+ * Set $RADHARC_STATE.
+ * 
+ * @param   settings  The settings.
+ * @return            0 on success, -1 on error.
+ */
+int
+get_state_pathname(struct settings *settings)
+{
+	const char *dir = getenv("XGD_RUNTIME_DIR");
+	char *display;
+	char *env;
+	int rc = -1, saved_errno;
+	t (display = get_display_string(settings));
+	if (!dir || !*dir)    dir = "/run";
+	t (env = malloc((strlen(dir) + sizeof("/radharc/") + strlen(display)) * sizeof(char)));
+	stpcpy(stpcpy(stpcpy(env, dir), "/radharc/"), display);
+	rc = setenv("RADHARC_STATE", env, 1);
+fail:
+	return saved_errno = errno, free(env), free(display), errno = saved_errno, rc;
 }
 

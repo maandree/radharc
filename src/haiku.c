@@ -73,7 +73,7 @@ random_haiku(const char *str, ... /*, NULL */)
  */
 void haiku(const char *s)
 {
-#define HAIKU(...)  do { fprintf(stderr, "\n%s", random_haiku(__VA_ARGS__, NULL)); return; } while (0)
+#define HAIKU(...)  do { fprintf(stderr, "%s", random_haiku(__VA_ARGS__, NULL)); return; } while (0)
 
 	/* Yeah, I now most of these are in 5–7–5 syllables,
 	 * rather than 5–7–5 mora. But really, how cares. */

@@ -229,12 +229,13 @@ parse_command_line(int argc, char *argv[], struct settings *settings)
 
 	if (!location_set && !(settings->temp)) {
 		fprintf(stderr,
-			"%s: The -l option is mandatory, unless single value -t is used."
+			"%s: The -l option is mandatory, unless single value -t is used. "
 	        	"See `man 1 radharc` for more information.\n",
 		        !argv0 ? "radharc" : argv0);
 		exit(2);
 	}
 
+	return;
 fail:
 	haiku(argv0 ? argv0 : "radharc");
 	exit(1);
