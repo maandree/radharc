@@ -16,10 +16,7 @@
  */
 #include "state.h"
 #include "haiku.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#define t(...)  do { if (__VA_ARGS__) goto fail; } while (0)
+#include "macros.h"
 
 
 /**

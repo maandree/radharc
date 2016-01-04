@@ -17,9 +17,7 @@
 #include "settings.h"
 #include "arg.h"
 #include "haiku.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "macros.h"
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
@@ -68,15 +66,17 @@ parse_temperature(const char *str, long int *temp, int *direction, int lower)
 	switch (*str) {
 	case '-':  dir = -1;  break;
 	case '+':  dir = +1;  break;
+	default:              break;
 	}
 	str += !!dir;
-	if (dir && !direction)  return -1;
-	else if (dir)           *direction = dir;
-	if (!isdigit(*str))     return -1;
+	t (dir && !direction);
+	if (dir) *direction = dir;
+	t (!isdigit(*str));
 	*temp = (errno = 0, strtol)(str, &end, 10);
-	if ((errno && !((errno == ERANGE) && (*temp == LONG_MAX))) || *end || (*temp < lower))
-		return -1;
+	t ((errno && !((errno == ERANGE) && (*temp == LONG_MAX))) || *end || (*temp < lower));
 	return 0;
+fail:
+	return -1;
 }
 
 
@@ -94,16 +94,15 @@ parse_timespec(const char *str, struct timespec *ts)
 	memset(ts, 0, sizeof(*ts));
 
 	/* Parse seconds. */
-	if (!isdigit(*str))
-		return -1;
+	t (!isdigit(*str));
 	while (isdigit(*str)) {
 		ts->tv_sec *= 10;
 		ts->tv_sec += *str++ & 15;
 	}
 
 	/* End? */
-	if (!*str)        return 0;
-	if (*str != '.')  return -1;
+	if (!*str)  return 0;
+	t (*str != '.');
 
 	/* Parse nanoseconds.*/
 	for (; (points++ < 9) && isdigit(*str); str++) {
@@ -111,7 +110,7 @@ parse_timespec(const char *str, struct timespec *ts)
 		ts->tv_nsec += *str++ & 15;
 	}
 	if (points == 9) {
-		if (!isdigit(*str))  return -1;
+		t (!isdigit(*str));
 		if (*str++ >= '5') {
 			ts->tv_nsec += 1;
 			if (ts->tv_nsec == 1000000000L)
@@ -119,10 +118,12 @@ parse_timespec(const char *str, struct timespec *ts)
 		}
 	}
 	while (isdigit(*str))  str++;
-	if (*str)  return -1;
+	t (*str);
 
 	/* End! */
 	return 0;
+fail:
+	return -1;
 }
 
 
@@ -208,11 +209,10 @@ parse_command_line(int argc, char *argv[], struct settings *settings)
 	case 'd': c++; /* Fall though. */
 	case 'e': c++; /* Fall though. */
 	case 'm': c++;
-#define REALLOC(VAR, N)  !(VAR = realloc(VAR, (N) * sizeof(*VAR)))
 		PLUS(settings->monitors_n = 0, free(settings->monitors_id), free(settings->monitors_arg));
 		settings->monitors_n++;
-		if (REALLOC(settings->monitors_id,  settings->monitors_n))  goto fail;
-		if (REALLOC(settings->monitors_arg, settings->monitors_n))  goto fail;
+		xrealloc(&(settings->monitors_id),  settings->monitors_n);
+		xrealloc(&(settings->monitors_arg), settings->monitors_n);
 		settings->monitors_id[settings->monitors_n - 1] = ARGF();
 		settings->monitors_arg[settings->monitors_n - 1] = (c == 3 ? 'm' : c == 2 ? 'e' : 'd'), c = 0;
 		break;
@@ -297,8 +297,8 @@ unmarshal_settings(char *buffer, struct settings **settings)
 
 	UNMARSHAL(sizeof(s_), &s_);
 	if (s_.monitors_n) {
-		if (!(*s = s_, s->monitors_id = malloc(s_.monitors_n * sizeof(char*))))  goto fail;
-		if (!(*s = s_, s->monitors_arg = malloc(s_.monitors_n * sizeof(char))))  goto fail;
+		try (*s = s_, s->monitors_id = malloc(s_.monitors_n * sizeof(char*)));
+		try (*s = s_, s->monitors_arg = malloc(s_.monitors_n * sizeof(char)));
 	}
 
 	s->hookpath = buf;

@@ -15,8 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "haiku.h"
-#include <stdio.h>
-#include <unistd.h>
+#include "macros.h"
 #include <math.h>
 #include <sys/stat.h>
 
@@ -54,13 +53,10 @@ int main(int argc, char *argv[])
 
 	while (fscanf(stdin, "%lf %lf\n", xyrgb + 0, xyrgb + 1) == 2) {
 		ciexyy_to_srgb(xyrgb[0], xyrgb[1], 1.0, xyrgb + 2, xyrgb + 3, xyrgb + 4);
-		if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb))
-			goto fail;
+		xwrite(STDOUT_FILENO, xyrgb, sizeof(xyrgb));
 	}
-	if (write(1, xyrgb, sizeof(xyrgb)) < (ssize_t)sizeof(xyrgb)) /* sugar */
-		goto fail;
-	if (fstat(1, &attr))
-		goto fail;
+	xwrite(STDOUT_FILENO, xyrgb, sizeof(xyrgb)); /* sugar */
+	t (fstat(STDOUT_FILENO, &attr));
 	if ((size_t)(attr.st_size) != (EXPECTED_ELEMENTS + 1) * 5 * sizeof(double))
 		return 1;
 

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "blackbody.h"
-#include <unistd.h>
+#include "macros.h"
 #include <math.h>
 #include <errno.h>
 
@@ -120,14 +120,13 @@ get_colour(int fd, long int temp, double *r, double *g, double *b)
 	 * unencodeable. */
 	if (temp > HIGHEST)  temp = HIGHEST;
 	/* Things do not glow below 1000 K. Yes, fire is hot! */
-	if (temp < LOWEST)   return errno = EDOM, -1;
+	if (temp < LOWEST)   t ((errno = EDOM));
 
 	/* Read table. */
 	offset = ((off_t)temp - LOWEST) / DELTA;
 	offset *= (off_t)(5 * sizeof(double));
 	errno = 0;
-	if (pread(fd, values, sizeof(values), offset) < (ssize_t)sizeof(values))
-		return -1;
+	xpread(fd, values, sizeof(values), offset);
 
 	/* Get colour. */
 	if (temp % DELTA)
@@ -144,5 +143,7 @@ get_colour(int fd, long int temp, double *r, double *g, double *b)
 	*b = *b > 0.0 ? *b : 0.0;
 
 	return 0;
+fail:
+	return -1;
 }
 
