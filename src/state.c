@@ -47,6 +47,16 @@ static libgamma_site_state_t *sites = NULL;
  */
 static size_t sites_n = 0;
 
+/**
+ * All partitions.
+ */
+static libgamma_partition_state_t *parts = NULL;
+
+/**
+ * The number of partitions stored in `parts`.
+ */
+static size_t parts_n = 0;
+
 
 
 /**
@@ -260,21 +270,29 @@ initialise_clut(const struct settings *settings)
 	const char *sitename_;
 	char *sitename = NULL;
 	void *new;
-	size_t i;
+	size_t i, j, parts_off = 0;
+	libgamma_site_state_t site;
 	int saved_errno;
 
-	try (sites = calloc(settings->monitors_n + 2, sizeof(*sites)));
+	try (sites = calloc(settings->monitors_n + 1, sizeof(*sites)));
 
 	for (i = 0; i < settings->monitors_n; i++) {
 		switch (settings->monitors_arg[i]) {
 		case 'd':
+			parts_off = parts_n;
 			t ((method = get_clut_method(sitename_ = settings->monitors_id[i])) < 0);
 			if (NONE_METHOD)  break;
 			sitename_ = strchr(sitename_, '=');
 			if (sitename_)  try ((sitename = strdup(sitename_ + 1)));
 			t ((error = libgamma_site_initialise(sites + sites_n, method, sitename)));
 			sitename = NULL;
-			sites_n++;
+			site = sites[sites_n++];
+			try (new = realloc(parts, (parts_n + site.partitions_available) * sizeof(*parts)));
+			parts = new;
+			for (j = 0; j < site.partitions_available; j++) {
+				t ((error = libgamma_partition_initialise(parts + parts_n, &site, j)));
+				parts_n++;
+			}
 			break;
 
 		case 'm':
