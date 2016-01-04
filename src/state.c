@@ -20,10 +20,32 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
 
 #include <libgamma.h>
 
+
 #define try(...)  do { if (!(__VA_ARGS__)) goto fail; } while (0)
+#define t(...)    do { if   (__VA_ARGS__)  goto fail; } while (0)
+
+
+
+/**
+ * The name of the process.
+ */
+extern char *argv0;
+
+
+
+/**
+ * All sites.
+ */
+static libgamma_site_state_t *sites = NULL;
+
+/**
+ * The number of sites stored in `sites`.
+ */
+static size_t sites_n = 0;
 
 
 
@@ -177,5 +199,100 @@ get_state_pathname(const struct settings *settings)
 	rc = setenv("RADHARC_STATE", env, 1);
 fail:
 	return saved_errno = errno, free(env), free(display), errno = saved_errno, rc;
+}
+
+
+/**
+ * Parse a value for the -d option, or select preferred adjustment method.
+ * 
+ * @param   display  The argument for the -d option. `NULL` for the preferred adjustment method.
+ * @return           The adjustment method. -1 if not found.
+ */
+static int
+get_clut_method(const char *display)
+{
+	int method;
+	const char *env;
+
+	if (!display) {
+		if (!libgamma_list_methods(&method, 1, 0)) {
+			fprintf(stderr, "No display was found.\n"
+			                "DRM support missing.\n"
+			                "Can you even see?\n");
+			return errno = 0, -1;
+		}
+		return method;
+	}
+	if (!strcasecmp(display, "none"))  return INT_MAX;
+	if (!strcasecmp(display, "drm"))   return LIBGAMMA_METHOD_LINUX_DRM;
+	if (!strchr(display, '=')) {
+		fprintf(stderr, "Specified display\n"
+		                "cannot be recognised.\n"
+		                "Try something else.\n");
+		return errno = 0, -1;
+	}
+
+	for (method = 0; method < LIBGAMMA_METHOD_COUNT; method++) {
+		env = libgamma_method_default_site_variable(method);
+		if (env && (strstr(display, env) == display) && (display[strlen(env)] == '='))
+			return method;
+	}
+
+	fprintf(stderr, "Specified display\n"
+	                "cannot be recognised.\n"
+	                "Try to recompile.\n");
+	return errno = 0, -1;
+}
+
+
+/**
+ * Initialise the CLUT support.
+ * 
+ * @param   settings  The settings.
+ * @return            0 on success, -1 on error.
+ */
+int
+initialise_clut(const struct settings *settings)
+{
+	int method, error = 0, is_none = 0;
+	const char *sitename_;
+	char *sitename = NULL;
+	void *new;
+	size_t i;
+	int saved_errno;
+
+	try (sites = calloc(settings->monitors_n + 2, sizeof(*sites)));
+
+	for (i = 0; i < settings->monitors_n; i++) {
+		switch (settings->monitors_arg[i]) {
+		case 'd':
+			t ((method = get_clut_method(sitename_ = settings->monitors_id[i])) < 0);
+			if ((is_none = (method == INT_MAX)))
+				break;
+			sitename_ = strchr(sitename_, '=');
+			if (sitename_)  try ((sitename = strdup(sitename_ + 1)));
+			t ((error = libgamma_site_initialise(sites + sites_n, method, sitename)));
+			sitename = NULL;
+			sites_n++;
+			break;
+
+		case 'm':
+			;/* TODO -m */
+			break;
+
+		case 'e':
+			;/* TODO -e */
+			break;
+		}
+	}
+
+	new = realloc(sites, (sites_n + 1) * sizeof(*sites));
+	sites = new ? new : sites;
+
+	return 0;
+fail:
+	if (error)  libgamma_perror(argv0, error), errno = 0;
+	saved_errno = errno, free(sitename), errno = saved_errno;
+	return -1;
 }
 
