@@ -20,6 +20,13 @@ $(OBJ): $(@:.o=.c) $(HDR)
 radharc: $(OBJ)
 	$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
+install: radharc
+	mkdir -p -- "$(DESTDIR)$(PREFIX)/bin"
+	cp radharc -- "$(DESTDIR)$(PREFIX)/bin"
+
+uninstall:
+	-rm -f -- "$(DESTDIR)$(PREFIX)/bin/radharc"
+
 clean:
 	-rm -f -- radharc *.o
 
