@@ -304,14 +304,12 @@ get_temperature(double *tp)
 	if (choosen_temperature < 0) {
 		if (libred_solar_elevation(latitude, longitude, tp))
 			return -1;
-		printf("elevation: %g\n", *tp);
 		if (*tp < low_elev)
 			*tp = low_elev;
 		if (*tp > high_elev)
 			*tp = high_elev;
 		*tp = (*tp - low_elev) / (high_elev - low_elev);
 		*tp = low_temp + *tp * (high_temp - low_temp);
-		printf("temperature: %g\n", *tp);
 	} else {
 		*tp = choosen_temperature;
 	}
