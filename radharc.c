@@ -165,7 +165,7 @@ handle_opt(char *opt, char *arg)
 				*p++ = '\0';
 			if (*arg && parse_double(&high_temp, arg))
 				usage();
-			if (*p && parse_double(&high_elev, p))
+			if (p && parse_double(&high_elev, p))
 				usage();
 			return 1;
 		case 'l':
@@ -174,7 +174,7 @@ handle_opt(char *opt, char *arg)
 				*p++ = '\0';
 			if (*arg && parse_double(&low_temp, arg))
 				usage();
-			if (*p && parse_double(&low_elev, p))
+			if (p && parse_double(&low_elev, p))
 				usage();
 			return 1;
 		case 'L':
