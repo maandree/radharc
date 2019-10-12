@@ -8,7 +8,6 @@ OBJ =\
 	radharc.o
 
 HDR =\
-	arg.h\
 	cg-base.h
 
 all: radharc
