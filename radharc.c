@@ -243,7 +243,9 @@ fill_filter(libcoopgamma_filter_t *restrict filter, double red, double green, do
 #define X(CONST, MEMBER, MAX, TYPE)\
 	case CONST:\
 		libclut_start_over(&(filter->ramps.MEMBER), MAX, TYPE, 1, 1, 1);\
+		libclut_linearise(&(filter->ramps.MEMBER), MAX, TYPE, 1, 1, 1);\
 		libclut_rgb_brightness(&(filter->ramps.MEMBER), MAX, TYPE, red, green, blue);\
+		libclut_standardise(&(filter->ramps.MEMBER), MAX, TYPE, 1, 1, 1);\
 		break;
 LIST_DEPTHS
 #undef X
@@ -269,6 +271,7 @@ set_ramps(double red, double green, double blue)
 	int r;
 	size_t i, j;
 
+	libclut_model_standard_to_linear(&red, &green, &blue);
 	for (i = 0, r = 1; i < filters_n; i++) {
 		if (!(crtc_updates[i].master) || !(crtc_info[crtc_updates[i].crtc].supported))
 			continue;
