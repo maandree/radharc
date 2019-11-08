@@ -1,0 +1,5 @@
+Fade out on SIGINT, abrupt on second SIGINT.
+On SIGHUG, exit but keep effect.
+On fade in, query active setting and start from there.
+Use bus for changing settings and CRTCs online.
+Add man page.
